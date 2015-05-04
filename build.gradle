@@ -1,8 +1,7 @@
 /*noinspection OptimizeUnusedImports,Unusedimports,AutoImports */
 
+
 import groovy.ui.GroovyMain
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder
-import org.apache.maven.cli.MavenCli
 
 apply plugin: 'java'
 apply plugin: 'application'
@@ -90,26 +89,33 @@ task updateContrib {
 
 
 task buildEFX (dependsOn: updateContrib) {
-    MavenCli cli = new MavenCli();
-
-    def req = new com.arg1arg2.A1A2FluentCliRequestBuilder()
-        .args("clean", "build")
-        .quiet(false)
-        .multiModuleProjectDirectory(File.createTempDir("a1a2_","_mvn_mmpd"))
-        .workingDirectory(projectDir, 'Contrib/e-fx-eclipse/svg2xml')
-        .debug(true)
-        .build();
-
-
-    def res = cli.doMain(req);
-
-
-    if (res as int != 0) {
-        System.out.println("Maven Client => "+ReflectionToStringBuilder.toString(cli as Object))
-        System.out.println("Maven Request => "+Objects.toString(req as Object))
-        System.out.println("Maven Return => "+Objects.toString(res))
-        throw new GradleException("A required maven execution has failed.")
-    }
+//    MavenCli cli = new MavenCli();
+//
+//    //def handler = new org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler();
+//
+//    def mereq = new DefaultMavenExecutionRequest();
+//    mereq.setEventSpyDispatcher(new EventSpyDispatcher());
+//    def remrep = new org.apache.maven.artifact.repository.ArtifactRepository();// RemoteRepository.Builder(project.repositories.jcenter().).build();
+//    //project.repositories.jcenter()
+//    mereq.addRemoteRepository(MavenRepositorySystem.buildArtifactRepository( remrep ));
+//
+//    def req = new com.arg1arg2.A1A2FluentCliRequestBuilder()
+//        .args("clean", "build")
+//        .quiet(false)
+//        .multiModuleProjectDirectory(File.createTempDir("a1a2_","_mvn_mmpd"))
+//        .workingDirectory(projectDir, 'Contrib/e-fx-eclipse/svg2xml')
+//        .request(mereq)
+//        .debug(true)
+//        .build();
+//
+//        def res = cli.doMain(req);
+//
+//    if (res as int != 0) {
+//        System.out.println("Maven Client => "+ReflectionToStringBuilder.toString(cli as Object))
+//        System.out.println("Maven Request => "+Objects.toString(req as Object))
+//        System.out.println("Maven Return => "+Objects.toString(res))
+//        throw new GradleException("A required maven execution has failed.")
+//    }
 }
 
 task buildContrib(dependsOn: buildEFX) {
