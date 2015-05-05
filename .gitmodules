@@ -1,0 +1,3 @@
+[submodule "JavaFX-Support"]
+	path = JavaFX-Support
+	url = git@github.com:grmartin/JavaFX-Data-Support.git
