@@ -1,32 +1,37 @@
 package com.arg1arg2.SVG2FXMLEx;
 
 import javax.xml.namespace.QName;
-import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Namespace;
 import javax.xml.stream.events.XMLEvent;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.regex.Pattern;
 
 import at.bestsolution.efxclipse.formats.svg.converter.FXMLConverter;
 import at.bestsolution.efxclipse.formats.svg.svg.SvgSvgElement;
-import org.eclipse.xtend2.lib.StringConcatenation;
-
-import static org.apache.commons.lang3.StringEscapeUtils.escapeXml10;
+import com.arg1arg2.data.xml.stream.XMLEventFactory;
+import com.arg1arg2.data.xml.stream.XMLInputFactory;
+import com.arg1arg2.data.xml.stream.XMLOutputFactory;
+import org.eclipse.xtext.xbase.lib.Pair;
 
 /**
  * Created by grmartin on 5/4/15.
  */
 public class FXMLDataConverter extends FXMLConverter {
+    private final XMLInputFactory inputFactory;
+    private final XMLOutputFactory outputFactory;
+    private final XMLEventFactory eventFactory;
     private boolean importAdded;
 
     public FXMLDataConverter(SvgSvgElement rootElement) {
         super(rootElement);
         this.importAdded = false;
+        this.outputFactory = XMLOutputFactory.newFactory();
+        this.inputFactory = XMLInputFactory.newFactory();
+        this.eventFactory = XMLEventFactory.newFactory();
     }
 
     @Override
@@ -35,9 +40,9 @@ public class FXMLDataConverter extends FXMLConverter {
         boolean hasExpounded = false;
 
         try {
-            XMLEventWriter writer = XMLOutputFactory.newInstance().createXMLEventWriter(stringWriter);
+            XMLEventWriter writer = outputFactory.createXMLEventWriter(stringWriter);
 
-            XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(new StringReader(super._handle(element).toString()));
+            XMLEventReader reader = inputFactory.createXMLEventReader(new StringReader(super._handle(element).toString()));
             while (reader.hasNext()) {
                 XMLEvent event = reader.nextEvent();
                 boolean alreadyAdded = false;
@@ -52,9 +57,11 @@ public class FXMLDataConverter extends FXMLConverter {
                             writer.add(XMLEventFactory.newFactory().createProcessingInstruction("import", "com.arg1arg2.jfx.Data"));
                             importAdded = true;
                         }
+//
+//                        // TODO: GRM: For good form we should likely close our Data tag, however... easier said than done.
+//                        appendRoot(generateDataElement(element).toString(), writer);
 
-                        // TODO: GRM: For good form we should likely close our Data tag, however... easier said than done.
-                        appendRoot(generateDataElement(element).toString(), writer);
+                        appendRoot(generateDataElementReader(element), writer);
                     }
                 }
                 if (!alreadyAdded) writer.add(event);
@@ -66,74 +73,82 @@ public class FXMLDataConverter extends FXMLConverter {
 
         stringWriter.flush();
 
-        return stringWriter.toString();
+        return stringWriter.toString().replaceFirst("<\\?xml.*?\\?>", "");
 
     }
 
     private void appendRoot(String xmlString, XMLEventWriter writer) throws XMLStreamException {
-        appendRoot(XMLInputFactory.newInstance().createXMLEventReader(new StringReader(xmlString)), writer);
+        appendRoot(inputFactory.createXMLEventReader(new StringReader(xmlString)), writer);
     }
 
     private void appendRoot(XMLEventReader reader, XMLEventWriter writer) throws XMLStreamException {
         while (reader.hasNext()) {
             XMLEvent subDocEvent = reader.nextEvent();
 
-            if (subDocEvent.isStartDocument() | subDocEvent.isEndDocument()) continue;
+            if (subDocEvent.isStartDocument() | subDocEvent.isEndDocument() | subDocEvent.isProcessingInstruction()) continue;
 
             writer.add(subDocEvent);
         }
     }
 
-    private CharSequence generateDataElement(SvgSvgElement element) {
-        StringConcatenation _builder = new StringConcatenation();
+    private XMLEventReader generateDataElementReader(SvgSvgElement element) {
+        XMLEventReader returnValue = null;
+        try {
+            Pair<XMLEventWriter, StringWriter> p  = outputFactory.createXMLEventStringWriterPair();
 
-        _builder.append("<Data ");
+            XMLEventWriter xml = p.getKey();
+            StringWriter string = p.getValue();
+            Namespace ns = eventFactory.createNamespace("fx", "http://javafx.com/fxml");
 
-        ifDo(_builder, "class", element.getClass_());
-        ifDo(_builder, "style", element.getStyle());
-        ifDo(_builder, "externalResourcesRequired", element.getExternalResourcesRequired());
-        ifDo(_builder, "x", element.getX());
-        ifDo(_builder, "y", element.getY());
-        ifDo(_builder, "width", element.getWidth());
-        ifDo(_builder, "height", element.getHeight());
-        ifDo(_builder, "viewBox", element.getViewBox());
-        ifDo(_builder, "preserveAspectRatio", element.getPreserveAspectRatio());
-        ifDo(_builder, "zoomAndPan", element.getZoomAndPan().getLiteral());
-        ifDo(_builder, "version", String.valueOf(element.getVersion()));
-        ifDo(_builder, "baseProfile", element.getBaseProfile());
-        ifDo(_builder, "contentScriptType", element.getContentScriptType());
-        ifDo(_builder, "contentStyleType", element.getContentStyleType());
-        ifDo(_builder, "styleSheet", element.getStyleSheet());
+            QName dataName = new QName("Data");
 
-        _builder.append("/>");
+            xml.add(eventFactory.createStartElement(dataName, null, null));
 
-        return _builder;
+            xml.add(ns);
+            xml.add(eventFactory.createAttribute(ns, "id", "svg_root_element"));
+            xml.add(eventFactory.createAttribute("id", "svg_root_element"));
+
+            ifDo(xml, "class", element.getClass_());
+            ifDo(xml, "style", element.getStyle());
+            ifDo(xml, "externalResourcesRequired", element.getExternalResourcesRequired());
+            ifDo(xml, "x", element.getX());
+            ifDo(xml, "y", element.getY());
+            ifDo(xml, "width", element.getWidth());
+            ifDo(xml, "height", element.getHeight());
+            ifDo(xml, "viewBox", element.getViewBox());
+            ifDo(xml, "preserveAspectRatio", element.getPreserveAspectRatio());
+            ifDo(xml, "zoomAndPan", element.getZoomAndPan().getLiteral());
+            ifDo(xml, "version", String.valueOf(element.getVersion()));
+            ifDo(xml, "baseProfile", element.getBaseProfile());
+            ifDo(xml, "contentScriptType", element.getContentScriptType());
+            ifDo(xml, "contentStyleType", element.getContentStyleType());
+            ifDo(xml, "styleSheet", element.getStyleSheet());
+
+            xml.add(eventFactory.createEndElement(dataName, null));
+
+            xml.flush();
+            string.flush();
+
+            returnValue = inputFactory.createXMLEventStringReaderPair(string.toString()).getKey();
+
+            xml.close();
+            try {
+                string.close();
+            } catch (IOException ignored) { }
+
+        } catch (XMLStreamException e) {
+            e.printStackTrace();
+        }
+        return returnValue;
     }
 
     private static boolean isEmpty(String s) {
         return s == null || s.length() == 0 || s.trim().length() == 0;
     }
 
-    void ifDo(StringConcatenation builder, String name, String value) {
+    void ifDo(XMLEventWriter builder, String name, String value) throws XMLStreamException {
         if (isEmpty(name) || isEmpty(value)) return;
 
-        name = safeName(name);
-        value = escape(value);
-
-        if (isEmpty(name) || isEmpty(value)) return;
-
-        builder.append(String.format("%s=\"%s\" ", name, value));
-    }
-
-    private static final Pattern NCNamePattern = Pattern.compile("(?i)^([A-Za-z_\\xc0-\\xd6\\xd8-\\xf6\u00f8-\u02ff\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][A-Za-z_\\xc0-\\xd6\\xd8-\\xf6\u00f8-\u02ff\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD-.0-9\\xb7\u0300-\u036f\u203f-\u2040]*?)$");
-
-    private String safeName(String name) {
-        if (NCNamePattern.matcher(name).matches()) return name;
-
-        return name.replaceAll("(?i)[^A-Za-z_\\xc0-\\xd6\\xd8-\\xf6\u00f8-\u02ff\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD-.0-9\\xb7\u0300-\u036f\u203f-\u2040]", "");
-    }
-
-    private String escape(String value) {
-        return escapeXml10(value);
+        builder.add(eventFactory.createAttribute(name, value));
     }
 }

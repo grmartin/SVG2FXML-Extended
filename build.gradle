@@ -4,6 +4,8 @@ apply plugin: 'application'
 
 sourceCompatibility = 1.8
 version = '0.81'
+def implName = 'SVG2XMLEx'
+mainClassName = 'com.arg1arg2.SVG2FXMLEx.Application'
 
 def contribScripts = [ ]
 
@@ -22,12 +24,24 @@ buildscript {
     dependencies { }
 }
 
+jar {
+    manifest {
+        attributes(
+            "Main-Class": mainClassName,
+            "Class-Path": "svg2fxml-0.8.1-SNAPSHOT.jar",
+            "Implementation-Version": version,
+            "Implementation-Title": implName,
+            "Implementation-Vendor": "Glenn R. Martin. Free for use, Use at your own risk."
+        )
+    }
+//    into('libs') { /* Merge Libraries in to JAR (if using One-Jar) */
+//        from configurations.compile
+//    }
+}
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
 
     compile files('Contrib/svg2fxml/svg2fxml-0.8.1-SNAPSHOT.jar')
-
-    compile 'org.apache.commons:commons-lang3:3.4'
 }
 
