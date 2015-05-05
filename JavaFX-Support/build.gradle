@@ -1,0 +1,23 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+version = '0.5.0'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.7'
+    testCompile 'junit:junit:4.12'
+}
+
+jar {
+    manifest {
+        attributes(
+            "Implementation-Version": version,
+            "Implementation-Title": "Arg1Arg2 JavaFX Data Tag Support",
+            "Implementation-Vendor": "Glenn R. Martin. Free for use, Use at your own risk."
+        )
+    }
+}

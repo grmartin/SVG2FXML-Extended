@@ -1,2 +1,3 @@
-rootProject.name = 'SVG2FXML-Extended'
+include 'JavaFX-Support'
 
+rootProject.name = 'SVG2FXML-Extended'
